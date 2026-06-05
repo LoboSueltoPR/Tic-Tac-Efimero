@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// ⚠️ Reglas ABIERTAS: cualquiera puede leer/escribir la colección `events`.
+// Apto para uso personal sin login. Si el sitio es público y te importa la
+// privacidad, cerralo agregando autenticación (Anonymous o email/clave).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /events/{eventId} {
+      allow read, write: if true;
+    }
+  }
+}

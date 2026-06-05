@@ -86,19 +86,35 @@ src/
 el modelo termina su turno. Al escribir/borrar en Firestore, `onSnapshot`
 refresca el calendario automáticamente.
 
-## Pendiente: sincronización con Google Calendar
+## Sincronización con Google Calendar
 
-Está **diferida** (ver `services/googleCalendar.ts`). Requiere un backend porque
-el service account (clave privada) no puede vivir en el cliente. Plan:
+Implementada **100% en el navegador** con Google Identity Services (OAuth2), sin
+backend ni service account (gratis). El usuario toca **"Conectar Google"**,
+autoriza el acceso a su calendario, y la app crea/edita/elimina eventos vía la
+Calendar API REST. El `id` que devuelve Google se guarda en Firestore como
+`google_event_id` (`services/googleCalendar.ts` + `services/firebase.ts`).
 
-1. Crear un service account en Google Cloud con la Calendar API habilitada.
-2. Compartir tu calendario personal con el email del service account.
-3. Una **Firebase Cloud Function** (requiere plan Blaze) que reciba
-   `{ action, eventData }`, ejecute la llamada a la Calendar API y devuelva el
-   `google_event_id`.
-4. Guardar ese id en el documento de Firestore para editar/eliminar después.
-5. Completar `VITE_GCAL_SYNC_URL` con la URL de la función.
+Si Google Calendar no está conectado o falla, el evento igual se guarda en
+Firestore (la sync es no bloqueante).
 
-`firebase.ts` ya llama a `syncToGoogleCalendar('create'|'update'|'delete', …)`
-de forma no bloqueante: si falla o no está configurado, el evento igual se
-guarda en Firestore.
+### Configuración (una vez, gratis)
+
+1. **Google Cloud Console** → proyecto `tictacefimero` (el mismo de Firebase).
+2. Habilitá la **Google Calendar API**
+   (APIs y servicios → Biblioteca → "Google Calendar API" → Habilitar).
+3. **Pantalla de consentimiento OAuth**: tipo "Externo", completá nombre/email,
+   agregá el scope `.../auth/calendar.events`, y sumá tu cuenta como
+   **usuario de prueba** (o publicá la app).
+4. **Credenciales → Crear credenciales → ID de cliente de OAuth →
+   Aplicación web**. En *Orígenes de JavaScript autorizados* agregá:
+   - `http://localhost:5174`
+   - `https://tictacefimero.web.app`
+5. Copiá el **Client ID** (`xxxxx.apps.googleusercontent.com`) a `.env`:
+   ```env
+   VITE_GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+   VITE_GOOGLE_CALENDAR_ID=primary
+   ```
+6. `npm run build && firebase deploy --only hosting`.
+
+> Nota: como es OAuth de cliente, cada quien sincroniza **su propio** calendario
+> al conectarse; no se comparte una cuenta central.

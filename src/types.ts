@@ -48,11 +48,28 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   otro: 'Otro',
 };
 
-/** Color por categoría (usado en el calendario y los chips). */
+export const CATEGORY_EMOJI: Record<Category, string> = {
+  trabajo: '💼',
+  personal: '🏠',
+  estudio: '📚',
+  salud: '🩺',
+  otro: '📌',
+};
+
+/** Color sólido por categoría (chips y eventos del calendario). */
 export const CATEGORY_COLORS: Record<Category, string> = {
-  trabajo: '#2563eb', // azul
-  personal: '#16a34a', // verde
+  trabajo: '#4f46e5', // indigo
+  personal: '#0d9488', // teal
   estudio: '#9333ea', // violeta
-  salud: '#dc2626', // rojo
+  salud: '#e11d48', // rosa/rojo
   otro: '#64748b', // gris
+};
+
+/** Fondo suave por categoría (badges). */
+export const CATEGORY_SOFT: Record<Category, string> = {
+  trabajo: '#eef2ff',
+  personal: '#f0fdfa',
+  estudio: '#faf5ff',
+  salud: '#fff1f2',
+  otro: '#f1f5f9',
 };

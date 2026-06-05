@@ -2,19 +2,23 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import type { AgendaEvent, Category, EventInput } from '../types';
-import { CATEGORIES, CATEGORY_LABELS } from '../types';
+import {
+  CATEGORIES,
+  CATEGORY_COLORS,
+  CATEGORY_EMOJI,
+  CATEGORY_LABELS,
+} from '../types';
 
 interface Props {
-  /** Evento a editar; si no se pasa, es creación. */
   initial?: AgendaEvent;
-  /** Fecha por defecto al crear (clic en día vacío). */
   defaultDate?: Date;
   onSave: (input: EventInput) => Promise<void> | void;
   onCancel: () => void;
 }
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100';
+const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-500';
 
 export default function EventForm({
   initial,
@@ -64,9 +68,7 @@ export default function EventForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">
-          Título
-        </label>
+        <label className={labelClass}>Título</label>
         <input
           className={inputClass}
           value={title}
@@ -77,9 +79,7 @@ export default function EventForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">
-          Fecha
-        </label>
+        <label className={labelClass}>Fecha</label>
         <input
           type="date"
           className={inputClass}
@@ -90,9 +90,7 @@ export default function EventForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
-            Inicio
-          </label>
+          <label className={labelClass}>Inicio</label>
           <input
             type="time"
             className={inputClass}
@@ -101,9 +99,7 @@ export default function EventForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
-            Fin
-          </label>
+          <label className={labelClass}>Fin</label>
           <input
             type="time"
             className={inputClass}
@@ -114,26 +110,32 @@ export default function EventForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">
-          Categoría
-        </label>
-        <select
-          className={inputClass}
-          value={category}
-          onChange={(e) => setCategory(e.target.value as Category)}
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {CATEGORY_LABELS[c]}
-            </option>
-          ))}
-        </select>
+        <label className={labelClass}>Categoría</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => {
+            const active = category === c;
+            return (
+              <button
+                type="button"
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                  active
+                    ? 'border-transparent text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                }`}
+                style={active ? { backgroundColor: CATEGORY_COLORS[c] } : undefined}
+              >
+                <span>{CATEGORY_EMOJI[c]}</span>
+                {CATEGORY_LABELS[c]}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">
-          Descripción
-        </label>
+        <label className={labelClass}>Descripción</label>
         <textarea
           className={inputClass}
           rows={3}
@@ -143,20 +145,24 @@ export default function EventForm({
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          {error}
+        </p>
+      )}
 
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+          className="rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 disabled:opacity-60"
         >
           {saving ? 'Guardando…' : 'Guardar'}
         </button>

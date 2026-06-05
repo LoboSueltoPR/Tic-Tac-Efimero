@@ -7,6 +7,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -16,7 +17,12 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import type { AgendaEvent, EventInput } from '../types';
-import { syncToGoogleCalendar } from './googleCalendar';
+import {
+  gcalCreate,
+  gcalUpdate,
+  gcalDelete,
+  isConnected as gcalConnected,
+} from './googleCalendar';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -57,13 +63,15 @@ export function subscribeEvents(
     onChange([]);
     return () => {};
   }
-  const q = query(eventsCollection(), orderBy('date'), orderBy('start_time'));
+  // Ordenamos solo por `date` en Firestore (índice automático) y desempatamos
+  // por `start_time` en JS, para no requerir un índice compuesto.
+  const q = query(eventsCollection(), orderBy('date'));
   return onSnapshot(
     q,
     (snap) => {
-      const events = snap.docs.map(
-        (d) => ({ id: d.id, ...d.data() }) as AgendaEvent
-      );
+      const events = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as AgendaEvent)
+        .sort(byDateTime);
       onChange(events);
     },
     (err) => {
@@ -82,11 +90,17 @@ export async function queryEventsInRange(
     eventsCollection(),
     where('date', '>=', fromDate),
     where('date', '<=', toDate),
-    orderBy('date'),
-    orderBy('start_time')
+    orderBy('date')
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AgendaEvent);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }) as AgendaEvent)
+    .sort(byDateTime);
+}
+
+/** Orden cronológico por fecha y luego por hora de inicio (ambos strings). */
+function byDateTime(a: AgendaEvent, b: AgendaEvent): number {
+  return `${a.date} ${a.start_time}`.localeCompare(`${b.date} ${b.start_time}`);
 }
 
 export async function createEvent(input: EventInput): Promise<string> {
@@ -97,10 +111,15 @@ export async function createEvent(input: EventInput): Promise<string> {
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
   });
-  // Sync diferido a Google Calendar (no bloquea ni rompe si falla).
-  syncToGoogleCalendar('create', { id: ref.id, ...input }).catch((e) =>
-    console.warn('[googleCalendar] sync create falló', e)
-  );
+  // Sync a Google Calendar (no bloquea ni rompe si falla / no conectado).
+  if (gcalConnected()) {
+    try {
+      const gid = await gcalCreate(input);
+      if (gid) await updateDoc(doc(db!, COLLECTION, ref.id), { google_event_id: gid });
+    } catch (e) {
+      console.warn('[googleCalendar] create falló', e);
+    }
+  }
   return ref.id;
 }
 
@@ -109,19 +128,48 @@ export async function updateEvent(
   patch: Partial<EventInput>
 ): Promise<void> {
   if (!db) throw new Error('Firebase no está configurado (revisá .env).');
-  await updateDoc(doc(db, COLLECTION, id), {
-    ...patch,
-    updated_at: serverTimestamp(),
-  });
-  syncToGoogleCalendar('update', { id, ...patch }).catch((e) =>
-    console.warn('[googleCalendar] sync update falló', e)
-  );
+  const ref = doc(db, COLLECTION, id);
+  await updateDoc(ref, { ...patch, updated_at: serverTimestamp() });
+
+  if (gcalConnected()) {
+    try {
+      const snap = await getDoc(ref);
+      const ev = { id, ...snap.data() } as AgendaEvent;
+      if (ev.google_event_id) {
+        await gcalUpdate(ev.google_event_id, ev);
+      } else {
+        // No existía en Google todavía: lo creamos ahora.
+        const gid = await gcalCreate(ev);
+        if (gid) await updateDoc(ref, { google_event_id: gid });
+      }
+    } catch (e) {
+      console.warn('[googleCalendar] update falló', e);
+    }
+  }
 }
 
 export async function deleteEvent(id: string): Promise<void> {
   if (!db) throw new Error('Firebase no está configurado (revisá .env).');
-  await deleteDoc(doc(db, COLLECTION, id));
-  syncToGoogleCalendar('delete', { id }).catch((e) =>
-    console.warn('[googleCalendar] sync delete falló', e)
-  );
+  const ref = doc(db, COLLECTION, id);
+
+  // Leemos el google_event_id antes de borrar el doc.
+  let googleId: string | null = null;
+  if (gcalConnected()) {
+    try {
+      const snap = await getDoc(ref);
+      googleId = (snap.data()?.google_event_id as string | undefined) ?? null;
+    } catch {
+      /* ignorar */
+    }
+  }
+
+  await deleteDoc(ref);
+
+  if (googleId && gcalConnected()) {
+    try {
+      await gcalDelete(googleId);
+    } catch (e) {
+      console.warn('[googleCalendar] delete falló', e);
+    }
+  }
 }
