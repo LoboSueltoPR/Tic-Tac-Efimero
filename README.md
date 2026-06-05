@@ -1,9 +1,9 @@
 # Agenda IA 🗓️🤖
 
 Agenda personal que combina un **calendario visual** con un **asistente de IA**
-(Claude) capaz de agendar, consultar, editar y eliminar eventos en lenguaje
-natural. Sin autenticación (uso personal). Persistencia en **Firebase
-Firestore** en tiempo real.
+capaz de agendar, consultar, editar y eliminar eventos en lenguaje natural. Sin
+autenticación (uso personal). Persistencia en **Firebase Firestore** en tiempo
+real.
 
 ## Stack
 
@@ -11,7 +11,8 @@ Firestore** en tiempo real.
 - **Tailwind CSS v4** (plugin `@tailwindcss/vite`)
 - **react-big-calendar** + **date-fns** (localizado en español)
 - **Firebase Firestore** (`onSnapshot` en tiempo real)
-- **Claude API** (`claude-sonnet-4-20250514`) con tool use / function calling
+- **Groq** (`llama-3.3-70b-versatile`, API compatible con OpenAI) con tool use /
+  function calling — free tier, key gratis en https://console.groq.com/keys
 - Google Calendar — **diferido** (ver más abajo)
 
 ## Puesta en marcha
@@ -30,12 +31,12 @@ npm run dev            # http://localhost:5174
 
 | Variable | Para qué |
 |---|---|
-| `VITE_ANTHROPIC_API_KEY` | Asistente de IA (Claude) |
+| `VITE_GROQ_API_KEY` | Asistente de IA (Groq) |
 | `VITE_FIREBASE_*` | Config web del proyecto Firebase |
 | `VITE_GCAL_SYNC_URL` | URL del backend de Google Calendar (diferido) |
 
 La app **corre sin credenciales**: muestra avisos y el calendario vacío. Con
-Firebase configurado persiste eventos; con la key de Claude se habilita el chat.
+Firebase configurado persiste eventos; con la key de Groq se habilita el chat.
 
 > ⚠️ Las `VITE_*` quedan expuestas en el bundle del cliente. Es una decisión
 > consciente para uso 100% personal/local.
@@ -51,7 +52,7 @@ src/
 │   └── EventForm.tsx    # formulario controlado
 ├── services/
 │   ├── firebase.ts      # init + CRUD + subscribeEvents (onSnapshot)
-│   ├── claude.ts        # tools + loop de tool use
+│   ├── ai.ts            # Groq: tools + loop de tool use
 │   └── googleCalendar.ts# stub diferido (no-op)
 ├── hooks/
 │   └── useEvents.ts      # suscripción en tiempo real → CalendarEvent[]
@@ -78,11 +79,11 @@ src/
 `date` se guarda como string para permitir consultas de rango
 (`where('date','>=',from)`).
 
-### Tools de Claude
+### Tools de la IA
 
 `create_event`, `list_events`, `delete_event`, `update_event`. El loop en
-`claude.ts` ejecuta las tools contra Firestore y reinyecta los resultados hasta
-que Claude termina su turno. Al escribir/borrar en Firestore, `onSnapshot`
+`ai.ts` ejecuta las tools contra Firestore y reinyecta los resultados hasta que
+el modelo termina su turno. Al escribir/borrar en Firestore, `onSnapshot`
 refresca el calendario automáticamente.
 
 ## Pendiente: sincronización con Google Calendar

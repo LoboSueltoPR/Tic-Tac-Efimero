@@ -1,6 +1,6 @@
-// Panel lateral de chat con el asistente de IA (Claude + tool use).
+// Panel lateral de chat con el asistente de IA (Groq + tool use).
 import { useEffect, useRef, useState } from 'react';
-import { sendChat, isClaudeConfigured, type ChatMessage } from '../services/claude';
+import { sendChat, isAIConfigured, type ChatMessage } from '../services/ai';
 
 const SUGGESTIONS = [
   'Agendá una reunión mañana a las 15',
@@ -59,9 +59,9 @@ export default function Chat() {
         <h2 className="flex items-center gap-2 font-semibold text-slate-800">
           🤖 Asistente
         </h2>
-        {!isClaudeConfigured && (
+        {!isAIConfigured && (
           <p className="mt-1 text-xs text-amber-600">
-            Falta VITE_ANTHROPIC_API_KEY en .env
+            Falta VITE_GROQ_API_KEY en .env
           </p>
         )}
       </div>
