@@ -21,6 +21,55 @@ import {
 
 type Tab = 'chat' | 'calendar';
 
+function HourglassLogo({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <defs>
+        <radialGradient id="hbg" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stopColor="#2a1a0e"/>
+          <stop offset="100%" stopColor="#0a0705"/>
+        </radialGradient>
+        <linearGradient id="hmetal" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#6b5a48"/>
+          <stop offset="40%" stopColor="#3d2e20"/>
+          <stop offset="70%" stopColor="#5a4535"/>
+          <stop offset="100%" stopColor="#2a1e14"/>
+        </linearGradient>
+        <linearGradient id="hsand" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#8b1a0a"/>
+          <stop offset="60%" stopColor="#c0280f"/>
+          <stop offset="100%" stopColor="#7a1208"/>
+        </linearGradient>
+        <linearGradient id="hglass" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1a1008" stopOpacity="0.7"/>
+          <stop offset="100%" stopColor="#0e0a06" stopOpacity="0.9"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="88" fill="url(#hbg)"/>
+      <rect width="512" height="512" rx="88" fill="none" stroke="#c95218" strokeWidth="2" opacity="0.2"/>
+      {/* Tapas */}
+      <ellipse cx="256" cy="400" rx="88" ry="18" fill="url(#hmetal)"/>
+      <ellipse cx="256" cy="112" rx="88" ry="18" fill="url(#hmetal)"/>
+      {/* Pilares */}
+      <rect x="168" y="112" width="14" height="288" rx="7" fill="url(#hmetal)"/>
+      <rect x="330" y="112" width="14" height="288" rx="7" fill="url(#hmetal)"/>
+      {/* Nudo central */}
+      <ellipse cx="256" cy="256" rx="22" ry="10" fill="url(#hmetal)"/>
+      {/* Bulbo superior — casi vacío */}
+      <path d="M 190 125 Q 188 200 256 250 Q 324 200 322 125 Z" fill="url(#hglass)"/>
+      <path d="M 220 130 Q 256 135 292 130 Q 280 145 256 148 Q 232 145 220 130 Z" fill="#8b1a0a" opacity="0.6"/>
+      {/* Hilo de arena cayendo */}
+      <line x1="256" y1="248" x2="256" y2="263" stroke="#c0280f" strokeWidth="3" strokeLinecap="round"/>
+      {/* Bulbo inferior — lleno */}
+      <path d="M 190 387 Q 188 312 256 262 Q 324 312 322 387 Z" fill="url(#hglass)"/>
+      <path d="M 256 262 Q 300 290 318 355 Q 318 382 256 385 Q 194 382 194 355 Q 212 290 256 262 Z" fill="url(#hsand)"/>
+      <path d="M 240 320 Q 256 295 272 320 Q 264 318 256 317 Q 248 318 240 320 Z" fill="#d4380f" opacity="0.7"/>
+      {/* Rombo Redondos */}
+      <path d="M 430 430 L 445 445 L 430 460 L 415 445 Z" fill="#c95218" opacity="0.5"/>
+    </svg>
+  );
+}
+
 type ModalState =
   | { mode: 'view'; event: AgendaEvent }
   | { mode: 'create'; date: Date }
@@ -81,14 +130,9 @@ export default function App() {
         }}
       >
         <div className="flex min-w-0 items-center gap-2">
-          <span
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black"
-            style={{ background: 'linear-gradient(135deg, #a81e0a, #c95218)', color: '#f0dfc0' }}
-          >
-            T
-          </span>
-          <h1 className="truncate text-sm font-extrabold tracking-tight sm:text-base" style={{ color: '#f0dfc0' }}>
-            <span className="hidden sm:inline">Tictacefímero</span>
+          <HourglassLogo size={32} />
+          <h1 className="truncate font-extrabold tracking-tight" style={{ color: '#f0dfc0', fontSize: '1rem', letterSpacing: '-0.01em' }}>
+            <span className="hidden sm:inline">Tic Tac Efímero</span>
             <span className="sm:hidden">TicTac IA</span>
           </h1>
         </div>

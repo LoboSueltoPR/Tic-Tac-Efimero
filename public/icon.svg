@@ -1,22 +1,94 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#1c1208"/>
-  <!-- Cara del reloj -->
-  <circle cx="256" cy="256" r="186" fill="none" stroke="#3a2010" stroke-width="12"/>
-  <circle cx="256" cy="256" r="172" fill="#0e0a06"/>
-  <!-- Marcas de hora -->
-  <line x1="256" y1="96" x2="256" y2="120" stroke="#5c4030" stroke-width="10" stroke-linecap="round"/>
-  <line x1="256" y1="392" x2="256" y2="416" stroke="#5c4030" stroke-width="10" stroke-linecap="round"/>
-  <line x1="96" y1="256" x2="120" y2="256" stroke="#5c4030" stroke-width="10" stroke-linecap="round"/>
-  <line x1="392" y1="256" x2="416" y2="256" stroke="#5c4030" stroke-width="10" stroke-linecap="round"/>
-  <!-- Manecilla larga (12 → posición ~10) -->
-  <line x1="256" y1="256" x2="196" y2="148" stroke="#f0dfc0" stroke-width="18" stroke-linecap="round"/>
-  <!-- Manecilla corta (hora ~2) -->
-  <line x1="256" y1="256" x2="330" y2="298" stroke="#c95218" stroke-width="14" stroke-linecap="round"/>
-  <!-- Centro -->
-  <circle cx="256" cy="256" r="18" fill="#d4900b"/>
-  <circle cx="256" cy="256" r="8" fill="#0e0a06"/>
-  <!-- Chispa IA (estrella pequeña arriba derecha) -->
-  <g transform="translate(370,110)" fill="#d4900b" opacity="0.9">
-    <polygon points="0,-18 4,-6 16,-6 7,2 10,14 0,7 -10,14 -7,2 -16,-6 -4,-6" />
-  </g>
+  <defs>
+    <!-- Fondo oscuro con viñeta -->
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a1a0e"/>
+      <stop offset="100%" stop-color="#0a0705"/>
+    </radialGradient>
+    <!-- Metal oxidado para el marco -->
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b5a48"/>
+      <stop offset="40%" stop-color="#3d2e20"/>
+      <stop offset="70%" stop-color="#5a4535"/>
+      <stop offset="100%" stop-color="#2a1e14"/>
+    </linearGradient>
+    <!-- Arena roja -->
+    <linearGradient id="sand" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b1a0a"/>
+      <stop offset="60%" stop-color="#c0280f"/>
+      <stop offset="100%" stop-color="#7a1208"/>
+    </linearGradient>
+    <!-- Vidrio del reloj -->
+    <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1008" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#2a1a0e" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0e0a06" stop-opacity="0.9"/>
+    </linearGradient>
+    <!-- Brillo del vidrio -->
+    <linearGradient id="shine" x1="0%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="512" height="512" rx="88" fill="url(#bg)"/>
+
+  <!-- Sombra interior sutil -->
+  <rect width="512" height="512" rx="88" fill="none" stroke="#c95218" stroke-width="2" opacity="0.15"/>
+
+  <!-- ===== RELOJ DE ARENA ===== -->
+  <!-- Base inferior — placa metálica -->
+  <ellipse cx="256" cy="400" rx="88" ry="18" fill="url(#metal)"/>
+  <ellipse cx="256" cy="397" rx="82" ry="12" fill="#4a3525"/>
+  <!-- Detalle tornillos base -->
+  <circle cx="192" cy="398" r="5" fill="#2a1e14" stroke="#6b5a48" stroke-width="1.5"/>
+  <circle cx="320" cy="398" r="5" fill="#2a1e14" stroke="#6b5a48" stroke-width="1.5"/>
+
+  <!-- Tapa superior — placa metálica -->
+  <ellipse cx="256" cy="112" rx="88" ry="18" fill="url(#metal)"/>
+  <ellipse cx="256" cy="115" rx="82" ry="12" fill="#4a3525"/>
+  <!-- Detalle tornillos tapa -->
+  <circle cx="192" cy="113" r="5" fill="#2a1e14" stroke="#6b5a48" stroke-width="1.5"/>
+  <circle cx="320" cy="113" r="5" fill="#2a1e14" stroke="#6b5a48" stroke-width="1.5"/>
+
+  <!-- Pilares laterales del marco -->
+  <rect x="168" y="112" width="14" height="288" rx="7" fill="url(#metal)"/>
+  <rect x="330" y="112" width="14" height="288" rx="7" fill="url(#metal)"/>
+  <!-- Reflejo pilares -->
+  <rect x="172" y="115" width="4" height="280" rx="2" fill="#8a7060" opacity="0.4"/>
+  <rect x="334" y="115" width="4" height="280" rx="2" fill="#8a7060" opacity="0.4"/>
+
+  <!-- Nudo central metálico -->
+  <ellipse cx="256" cy="256" rx="22" ry="10" fill="url(#metal)"/>
+  <ellipse cx="256" cy="254" rx="16" ry="6" fill="#5a4535"/>
+
+  <!-- === BULBO SUPERIOR (vacío, casi sin arena) === -->
+  <!-- Forma del vidrio superior -->
+  <path d="M 190 125 Q 188 200 256 250 Q 324 200 322 125 Z" fill="url(#glass)"/>
+  <!-- Arena cayendo — hilo fino rojo -->
+  <line x1="256" y1="248" x2="256" y2="262" stroke="#c0280f" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  <!-- Poca arena arriba (casi vacío) -->
+  <path d="M 220 130 Q 256 135 292 130 Q 280 145 256 148 Q 232 145 220 130 Z" fill="#8b1a0a" opacity="0.6"/>
+  <!-- Brillo vidrio superior -->
+  <path d="M 195 128 Q 210 160 230 200" stroke="url(#shine)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- === BULBO INFERIOR (lleno de arena roja) === -->
+  <!-- Forma del vidrio inferior -->
+  <path d="M 190 387 Q 188 312 256 262 Q 324 312 322 387 Z" fill="url(#glass)"/>
+  <!-- Arena roja acumulada -->
+  <path d="M 256 262 Q 300 290 318 355 Q 318 382 256 385 Q 194 382 194 355 Q 212 290 256 262 Z" fill="url(#sand)"/>
+  <!-- Cono superior de la arena (montículo) -->
+  <path d="M 240 320 Q 256 295 272 320 Q 264 318 256 317 Q 248 318 240 320 Z" fill="#d4380f" opacity="0.7"/>
+  <!-- Reflejo superficie arena -->
+  <ellipse cx="256" cy="320" rx="18" ry="5" fill="#e05020" opacity="0.25"/>
+  <!-- Brillo vidrio inferior -->
+  <path d="M 195 385 Q 210 350 228 310" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.07"/>
+
+  <!-- Manchas de "óxido" decorativas sobre el fondo -->
+  <circle cx="110" cy="110" r="28" fill="#4a2010" opacity="0.18"/>
+  <circle cx="400" cy="390" r="22" fill="#4a2010" opacity="0.15"/>
+
+  <!-- Rombo decorativo (guiño a los Redondos) abajo derecha -->
+  <path d="M 430 430 L 445 445 L 430 460 L 415 445 Z" fill="#c95218" opacity="0.45"/>
 </svg>
