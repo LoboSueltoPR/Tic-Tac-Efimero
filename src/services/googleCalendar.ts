@@ -29,6 +29,7 @@ const TZ =
 let tokenClient: GoogleTokenClient | null = null;
 let accessToken: string | null = null;
 let tokenExpiry = 0;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 type Listener = (connected: boolean) => void;
 const listeners = new Set<Listener>();
@@ -87,27 +88,54 @@ async function ensureTokenClient(): Promise<GoogleTokenClient> {
   return tokenClient;
 }
 
+function scheduleRefresh(ttlMs: number) {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  // Renueva el token 2 minutos antes de que expire
+  const delay = Math.max(ttlMs - 120_000, 30_000);
+  refreshTimer = setTimeout(() => {
+    tryAutoConnect();
+  }, delay);
+}
+
 function applyToken(resp: { access_token?: string; expires_in?: number }) {
   accessToken = resp.access_token ?? null;
   const ttl = (resp.expires_in ?? 3600) * 1000;
   tokenExpiry = Date.now() + ttl - 60_000; // margen de 1 min
-  if (accessToken) localStorage.setItem(STORAGE_HINT, '1');
+  if (accessToken) {
+    localStorage.setItem(STORAGE_HINT, '1');
+    scheduleRefresh(ttl);
+  }
   emit();
 }
 
-/** Conecta (muestra el popup de Google la primera vez). */
+/** Conecta — sin popup si ya autorizó antes, con selector de cuenta la primera vez. */
 export async function connect(): Promise<void> {
   if (!CLIENT_ID) {
     throw new Error('Falta VITE_GOOGLE_CLIENT_ID en .env.');
   }
   const client = await ensureTokenClient();
+  // Si ya autorizó antes intentamos sin popup; si falla mostramos el selector.
+  const firstTime = localStorage.getItem(STORAGE_HINT) !== '1';
   return new Promise((resolve, reject) => {
     client.callback = (resp) => {
-      if (resp.error) return reject(new Error(resp.error));
+      if (resp.error) {
+        if (!firstTime) {
+          // Reintento con selector de cuenta
+          client.callback = (r2) => {
+            if (r2.error) return reject(new Error(r2.error));
+            applyToken(r2);
+            resolve();
+          };
+          client.requestAccessToken({ prompt: 'select_account' });
+        } else {
+          reject(new Error(resp.error));
+        }
+        return;
+      }
       applyToken(resp);
       resolve();
     };
-    client.requestAccessToken({ prompt: 'consent' });
+    client.requestAccessToken({ prompt: firstTime ? 'select_account' : '' });
   });
 }
 
@@ -130,6 +158,7 @@ export async function tryAutoConnect(): Promise<void> {
 }
 
 export function disconnect(): void {
+  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
   const oauth = gisOAuth();
   if (accessToken && oauth) oauth.revoke(accessToken);
   accessToken = null;

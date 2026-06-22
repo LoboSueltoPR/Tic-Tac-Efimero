@@ -34,12 +34,13 @@ function GoogleButton() {
     return (
       <button
         onClick={disconnect}
-        title="Desconectar Google Calendar"
-        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition"
-        style={{ background: 'rgba(240,223,192,0.1)', color: '#a89070', border: '1px solid rgba(240,223,192,0.15)' }}
+        title="Google Calendar conectado — click para desconectar"
+        className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition"
+        style={{ background: 'rgba(240,223,192,0.08)', color: '#a89070', border: '1px solid rgba(240,223,192,0.15)', whiteSpace: 'nowrap' }}
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-        Google
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+        <span className="hidden sm:inline">Google</span>
+        <span className="sm:hidden">GCal</span>
       </button>
     );
   }
@@ -49,10 +50,12 @@ function GoogleButton() {
       onClick={connect}
       disabled={!configured || connecting}
       title={configured ? 'Conectar Google Calendar' : 'Falta VITE_GOOGLE_CLIENT_ID'}
-      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40"
-      style={{ background: 'rgba(201,82,24,0.2)', color: '#f0dfc0', border: '1px solid rgba(201,82,24,0.35)' }}
+      className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition disabled:opacity-40"
+      style={{ background: 'rgba(201,82,24,0.2)', color: '#f0dfc0', border: '1px solid rgba(201,82,24,0.35)', whiteSpace: 'nowrap' }}
     >
-      📆 {connecting ? 'Conectando…' : 'Google'}
+      <span>📆</span>
+      <span className="hidden sm:inline">{connecting ? 'Conectando…' : 'Conectar Google'}</span>
+      <span className="sm:hidden">{connecting ? '…' : 'Conectar'}</span>
     </button>
   );
 }
@@ -69,22 +72,24 @@ export default function App() {
 
       {/* Header */}
       <header
-        className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 sm:px-5"
+        className="flex shrink-0 items-center justify-between gap-2 px-3 py-2.5 sm:px-5 sm:py-3"
         style={{
           background: 'linear-gradient(135deg, #1c1208 0%, #2e1208 60%, #1c0e06 100%)',
           borderBottom: '1px solid #c9520820',
           boxShadow: '0 2px 16px rgba(168,30,10,0.18)',
+          minHeight: 0,
         }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <span
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-sm font-black"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black"
             style={{ background: 'linear-gradient(135deg, #a81e0a, #c95218)', color: '#f0dfc0' }}
           >
             T
           </span>
-          <h1 className="text-base font-extrabold tracking-tight" style={{ color: '#f0dfc0' }}>
-            Tictacefímero
+          <h1 className="truncate text-sm font-extrabold tracking-tight sm:text-base" style={{ color: '#f0dfc0' }}>
+            <span className="hidden sm:inline">Tictacefímero</span>
+            <span className="sm:hidden">TicTac IA</span>
           </h1>
         </div>
         <GoogleButton />
