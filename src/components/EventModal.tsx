@@ -34,20 +34,25 @@ function ModalShell({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      style={{ background: 'rgba(14,10,6,0.85)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+        className="w-full max-w-md overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-3xl"
+        style={{ background: '#1c1208', border: '1px solid #3a2010' }}
         onClick={(e) => e.stopPropagation()}
       >
         {accent && <div className="h-1.5 w-full" style={{ background: accent }} />}
         <div className="p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+            <h2 className="text-lg font-bold" style={{ color: '#f0dfc0' }}>{title}</h2>
             <button
               onClick={onClose}
-              className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              className="rounded-full p-1.5 transition"
+              style={{ color: '#5c4030' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#f0dfc0')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#5c4030')}
               aria-label="Cerrar"
             >
               ✕
@@ -83,9 +88,9 @@ export default function EventModal({
   if (editing) {
     return (
       <ModalShell
-        title={event ? '✏️ Editar evento' : '✨ Nuevo evento'}
+        title={event ? '✏️ Editar evento' : '+ Nuevo evento'}
         onClose={onClose}
-        accent={event ? CATEGORY_COLORS[event.category] : '#8b5cf6'}
+        accent={event ? CATEGORY_COLORS[event.category] : '#c95218'}
       >
         <EventForm
           initial={event}
@@ -120,11 +125,11 @@ export default function EventModal({
           {CATEGORY_EMOJI[event.category]} {CATEGORY_LABELS[event.category]}
         </span>
 
-        <h3 className="text-2xl font-bold leading-snug text-slate-800">
+        <h3 className="text-2xl font-bold leading-snug" style={{ color: '#f0dfc0' }}>
           {event.title}
         </h3>
 
-        <div className="space-y-1.5 text-sm text-slate-600">
+        <div className="space-y-1.5 text-sm" style={{ color: '#a89070' }}>
           <p className="flex items-center gap-2 capitalize">
             <span>📅</span> {formatFecha(event.date)}
           </p>
@@ -132,14 +137,17 @@ export default function EventModal({
             <span>🕒</span> {event.start_time} – {event.end_time}
           </p>
           {event.google_event_id && (
-            <p className="flex items-center gap-2 text-xs text-emerald-600">
+            <p className="flex items-center gap-2 text-xs" style={{ color: '#4ade80' }}>
               <span>✓</span> Sincronizado con Google Calendar
             </p>
           )}
         </div>
 
         {event.description && (
-          <p className="whitespace-pre-wrap rounded-xl bg-slate-50 p-3.5 text-sm text-slate-700">
+          <p
+            className="whitespace-pre-wrap rounded-xl p-3.5 text-sm"
+            style={{ background: '#160e06', color: '#f0dfc0', border: '1px solid #3a2010' }}
+          >
             {event.description}
           </p>
         )}
@@ -147,12 +155,15 @@ export default function EventModal({
         <div className="flex justify-end gap-2 pt-2">
           {deleting ? (
             <>
-              <span className="self-center text-sm text-slate-500">
+              <span className="self-center text-sm" style={{ color: '#a89070' }}>
                 ¿Seguro?
               </span>
               <button
                 onClick={() => setDeleting(false)}
-                className="rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
+                className="rounded-xl px-3.5 py-2.5 text-sm font-semibold transition"
+                style={{ color: '#a89070' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#2a1a0a')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 No
               </button>
@@ -161,7 +172,10 @@ export default function EventModal({
                   await onDelete(event.id);
                   onClose();
                 }}
-                className="rounded-xl bg-red-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
+                className="rounded-xl px-3.5 py-2.5 text-sm font-semibold transition"
+                style={{ background: '#7f1d1d', color: '#fca5a5' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#991b1b')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#7f1d1d')}
               >
                 Sí, eliminar
               </button>
@@ -170,13 +184,21 @@ export default function EventModal({
             <>
               <button
                 onClick={() => setDeleting(true)}
-                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold transition"
+                style={{ color: '#ef4444' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#2a1010')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 Eliminar
               </button>
               <button
                 onClick={() => setEditing(true)}
-                className="rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+                className="rounded-xl px-5 py-2.5 text-sm font-semibold transition hover:opacity-90"
+                style={{
+                  background: 'linear-gradient(135deg, #a81e0a, #c95218)',
+                  color: '#f0dfc0',
+                  boxShadow: '0 2px 10px rgba(201,82,24,0.35)',
+                }}
               >
                 Editar
               </button>

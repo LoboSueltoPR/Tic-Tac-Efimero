@@ -16,9 +16,36 @@ interface Props {
   onCancel: () => void;
 }
 
-const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100';
-const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-500';
+const inputStyle = {
+  background: '#0e0a06',
+  border: '1px solid #3a2010',
+  color: '#f0dfc0',
+  borderRadius: '12px',
+  padding: '0.625rem 0.875rem',
+  fontSize: '0.875rem',
+  outline: 'none',
+  width: '100%',
+  transition: 'border-color 0.15s, box-shadow 0.15s',
+} as React.CSSProperties;
+
+const labelStyle = {
+  display: 'block',
+  marginBottom: '0.375rem',
+  fontSize: '0.75rem',
+  fontWeight: '600',
+  color: '#5c4030',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.06em',
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function EventForm({
   initial,
@@ -37,6 +64,15 @@ export default function EventForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function focusStyle(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    e.currentTarget.style.borderColor = '#c95218';
+    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(201,82,24,0.2)';
+  }
+  function blurStyle(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    e.currentTarget.style.borderColor = '#3a2010';
+    e.currentTarget.style.boxShadow = 'none';
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,50 +103,53 @@ export default function EventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className={labelClass}>Título</label>
+      <Field label="Título">
         <input
-          className={inputClass}
+          style={inputStyle}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onFocus={focusStyle}
+          onBlur={blurStyle}
           placeholder="Ej: Reunión con Martín"
           autoFocus
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className={labelClass}>Fecha</label>
+      <Field label="Fecha">
         <input
           type="date"
-          className={inputClass}
+          style={inputStyle}
           value={date}
           onChange={(e) => setDate(e.target.value)}
+          onFocus={focusStyle}
+          onBlur={blurStyle}
         />
-      </div>
+      </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Inicio</label>
+        <Field label="Inicio">
           <input
             type="time"
-            className={inputClass}
+            style={inputStyle}
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
           />
-        </div>
-        <div>
-          <label className={labelClass}>Fin</label>
+        </Field>
+        <Field label="Fin">
           <input
             type="time"
-            className={inputClass}
+            style={inputStyle}
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
+            onFocus={focusStyle}
+            onBlur={blurStyle}
           />
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label className={labelClass}>Categoría</label>
+      <Field label="Categoría">
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((c) => {
             const active = category === c;
@@ -119,12 +158,24 @@ export default function EventForm({
                 type="button"
                 key={c}
                 onClick={() => setCategory(c)}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition"
+                style={
                   active
-                    ? 'border-transparent text-white shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                }`}
-                style={active ? { backgroundColor: CATEGORY_COLORS[c] } : undefined}
+                    ? { background: CATEGORY_COLORS[c], color: '#f0dfc0', border: '1px solid transparent', boxShadow: `0 2px 8px ${CATEGORY_COLORS[c]}55` }
+                    : { background: '#0e0a06', color: '#a89070', border: '1px solid #3a2010' }
+                }
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.borderColor = '#c95218';
+                    e.currentTarget.style.color = '#f0dfc0';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.borderColor = '#3a2010';
+                    e.currentTarget.style.color = '#a89070';
+                  }
+                }}
               >
                 <span>{CATEGORY_EMOJI[c]}</span>
                 {CATEGORY_LABELS[c]}
@@ -132,21 +183,25 @@ export default function EventForm({
             );
           })}
         </div>
-      </div>
+      </Field>
 
-      <div>
-        <label className={labelClass}>Descripción</label>
+      <Field label="Descripción">
         <textarea
-          className={inputClass}
+          style={{ ...inputStyle, resize: 'none' }}
           rows={3}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          onFocus={focusStyle}
+          onBlur={blurStyle}
           placeholder="Opcional"
         />
-      </div>
+      </Field>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p
+          className="rounded-lg px-3 py-2 text-sm"
+          style={{ background: '#2a1010', color: '#fca5a5', border: '1px solid #7f1d1d' }}
+        >
           {error}
         </p>
       )}
@@ -155,14 +210,22 @@ export default function EventForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
+          className="rounded-xl px-4 py-2.5 text-sm font-semibold transition"
+          style={{ color: '#a89070' }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#2a1a0a')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 disabled:opacity-60"
+          className="rounded-xl px-5 py-2.5 text-sm font-semibold transition hover:opacity-90 disabled:opacity-60"
+          style={{
+            background: 'linear-gradient(135deg, #a81e0a, #c95218)',
+            color: '#f0dfc0',
+            boxShadow: '0 2px 10px rgba(201,82,24,0.35)',
+          }}
         >
           {saving ? 'Guardando…' : 'Guardar'}
         </button>

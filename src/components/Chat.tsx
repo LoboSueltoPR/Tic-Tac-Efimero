@@ -13,7 +13,7 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
     {
       role: 'assistant',
       content:
-        '¡Hola! 👋 Soy tu asistente de agenda. Pedime que agende, consulte o elimine eventos en lenguaje natural.',
+        '¡Hola! Soy tu asistente de agenda. Pedime que agende, consulte o elimine eventos en lenguaje natural.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -54,22 +54,31 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col" style={{ background: '#1c1208' }}>
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-lg shadow-sm">
-          🤖
+      <div
+        className="flex items-center gap-3 px-4 py-3"
+        style={{ borderBottom: '1px solid #3a2010' }}
+      >
+        <div
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-black"
+          style={{ background: 'linear-gradient(135deg, #a81e0a, #c95218)', color: '#f0dfc0' }}
+        >
+          IA
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-800">Asistente</h2>
-          <p className="truncate text-xs text-slate-400">
+          <h2 className="font-semibold" style={{ color: '#f0dfc0' }}>Asistente</h2>
+          <p className="truncate text-xs" style={{ color: '#5c4030' }}>
             {isAIConfigured ? 'Listo para ayudarte' : 'Falta VITE_GROQ_API_KEY'}
           </p>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 lg:hidden"
+            className="rounded-full p-2 transition lg:hidden"
+            style={{ color: '#5c4030' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#f0dfc0')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#5c4030')}
             aria-label="Cerrar chat"
           >
             ✕
@@ -78,18 +87,33 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Mensajes */}
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 p-4">
+      <div
+        ref={scrollRef}
+        className="flex-1 space-y-3 overflow-y-auto p-4"
+        style={{ background: '#160e06' }}
+      >
         {messages.map((m, i) => (
           <div
             key={i}
             className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm shadow-sm ${
+              className="max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm"
+              style={
                 m.role === 'user'
-                  ? 'rounded-br-md bg-gradient-to-br from-indigo-500 to-violet-600 text-white'
-                  : 'rounded-bl-md border border-slate-100 bg-white text-slate-700'
-              }`}
+                  ? {
+                      background: 'linear-gradient(135deg, #a81e0a, #c95218)',
+                      color: '#f0dfc0',
+                      borderBottomRightRadius: '4px',
+                      boxShadow: '0 2px 8px rgba(168,30,10,0.4)',
+                    }
+                  : {
+                      background: '#2a1a0a',
+                      color: '#f0dfc0',
+                      border: '1px solid #3a2010',
+                      borderBottomLeftRadius: '4px',
+                    }
+              }
             >
               {m.content}
             </div>
@@ -97,10 +121,13 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
         ))}
         {busy && (
           <div className="flex justify-start">
-            <div className="flex gap-1 rounded-2xl rounded-bl-md border border-slate-100 bg-white px-4 py-3 shadow-sm">
-              <span className="h-2 w-2 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.3s]" />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.15s]" />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-violet-400" />
+            <div
+              className="flex gap-1 rounded-2xl px-4 py-3"
+              style={{ background: '#2a1a0a', border: '1px solid #3a2010', borderBottomLeftRadius: '4px' }}
+            >
+              <span className="h-2 w-2 animate-bounce rounded-full [animation-delay:-0.3s]" style={{ background: '#c95218' }} />
+              <span className="h-2 w-2 animate-bounce rounded-full [animation-delay:-0.15s]" style={{ background: '#c95218' }} />
+              <span className="h-2 w-2 animate-bounce rounded-full" style={{ background: '#c95218' }} />
             </div>
           </div>
         )}
@@ -108,12 +135,21 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
 
       {/* Sugerencias */}
       {messages.length <= 1 && (
-        <div className="flex flex-wrap gap-2 bg-slate-50/60 px-4 pb-3">
+        <div className="flex flex-wrap gap-2 px-4 pb-3" style={{ background: '#160e06' }}>
           {SUGGESTIONS.map((s) => (
             <button
               key={s}
               onClick={() => send(s)}
-              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-violet-300 hover:text-violet-700"
+              className="rounded-full px-3 py-1.5 text-xs font-medium transition"
+              style={{ background: '#2a1a0a', border: '1px solid #3a2010', color: '#a89070' }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = '#c95218';
+                e.currentTarget.style.color = '#f0dfc0';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = '#3a2010';
+                e.currentTarget.style.color = '#a89070';
+              }}
             >
               {s}
             </button>
@@ -127,10 +163,24 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
           e.preventDefault();
           send(input);
         }}
-        className="flex items-center gap-2 border-t border-slate-100 p-3"
+        className="flex items-center gap-2 p-3"
+        style={{ borderTop: '1px solid #3a2010' }}
       >
         <input
-          className="flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100"
+          className="flex-1 rounded-full px-4 py-2.5 text-sm outline-none transition"
+          style={{
+            background: '#0e0a06',
+            border: '1px solid #3a2010',
+            color: '#f0dfc0',
+          }}
+          onFocus={e => {
+            e.currentTarget.style.borderColor = '#c95218';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(201,82,24,0.2)';
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = '#3a2010';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
           placeholder="Escribí un mensaje…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -139,7 +189,8 @@ export default function Chat({ onClose }: { onClose?: () => void }) {
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md transition hover:opacity-90 disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:opacity-90 disabled:opacity-40"
+          style={{ background: 'linear-gradient(135deg, #a81e0a, #c95218)', boxShadow: '0 2px 10px rgba(201,82,24,0.4)' }}
           aria-label="Enviar"
         >
           ➤
