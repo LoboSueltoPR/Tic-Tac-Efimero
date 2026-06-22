@@ -126,7 +126,7 @@ export default function App() {
           background: 'linear-gradient(135deg, #1c1208 0%, #2e1208 60%, #1c0e06 100%)',
           borderBottom: '1px solid #c9520820',
           boxShadow: '0 2px 16px rgba(168,30,10,0.18)',
-          minHeight: 0,
+          paddingTop: 'max(0.625rem, env(safe-area-inset-top))',
         }}
       >
         <div className="flex min-w-0 items-center gap-2">
