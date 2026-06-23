@@ -214,12 +214,20 @@ async function waSend(to, body) {
     to:    number,
     body,
   });
-  await fetch(`https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE_ID}/messages/chat`, {
+  const res = await fetch(`https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE_ID}/messages/chat`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body:    params.toString(),
   });
+  const json = await res.json().catch(() => ({}));
+  return json?.id ?? null;
 }
+
+// Número autorizado (solo este puede agendar)
+const OWNER = '5492915710185';
+
+// Set de IDs enviados por el bot para evitar loops
+const sentByBot = new Set();
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
@@ -227,16 +235,37 @@ export default async function handler(req, res) {
 
   try {
     const { data, event_type } = req.body ?? {};
-    if (event_type !== 'message_received') return res.status(200).json({ ok: true });
-    if (data?.type !== 'chat')             return res.status(200).json({ ok: true });
-    if (data?.fromMe)                      return res.status(200).json({ ok: true });
 
-    const from = data?.from;
+    // Aceptar mensajes recibidos O creados (para self-messaging)
+    const isReceived = event_type === 'message_received';
+    const isCreated  = event_type === 'message_create';
+    if (!isReceived && !isCreated) return res.status(200).json({ ok: true });
+
+    // Solo mensajes de texto
+    if (data?.type !== 'chat') return res.status(200).json({ ok: true });
+
+    // Ignorar mensajes enviados por el bot (anti-loop)
+    if (sentByBot.has(data?.id)) {
+      sentByBot.delete(data.id);
+      return res.status(200).json({ ok: true });
+    }
+
+    // Extraer número limpio del remitente
+    const rawFrom = data?.from ?? '';
+    const fromNumber = rawFrom.replace('@c.us', '').replace(/\D/g, '');
+
+    // Solo procesar mensajes del dueño
+    if (fromNumber !== OWNER) return res.status(200).json({ ok: true });
+
     const text = data?.body?.trim();
-    if (!from || !text) return res.status(200).json({ ok: true });
+    if (!text) return res.status(200).json({ ok: true });
 
     const reply = await processMessage(text);
-    await waSend(from, reply);
+
+    // Guardar ID del mensaje que va a enviar el bot para ignorarlo después
+    const sentId = await waSend(rawFrom || `${OWNER}@c.us`, reply);
+    if (sentId) sentByBot.add(sentId);
+
     return res.status(200).json({ ok: true });
 
   } catch (err) {
