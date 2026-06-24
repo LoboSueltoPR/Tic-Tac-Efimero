@@ -249,9 +249,11 @@ export default async function handler(req, res) {
     }
 
     const fromNumber = (data?.from ?? '').replace('@c.us', '').replace(/\D/g, '');
-    console.log('FROM_NUMBER:', fromNumber, '| MATCH:', fromNumber === OWNER);
+    const toNumber   = (data?.to   ?? '').replace('@c.us', '').replace(/\D/g, '');
+    console.log('FROM:', fromNumber, '| TO:', toNumber, '| SELF:', fromNumber === OWNER && toNumber === OWNER);
 
-    if (fromNumber !== OWNER) return res.status(200).json({ ok: true });
+    // Solo procesar auto-mensajes (de mí mismo a mí mismo)
+    if (fromNumber !== OWNER || toNumber !== OWNER) return res.status(200).json({ ok: true });
 
     const text = rawBody.trim();
     if (!text) return res.status(200).json({ ok: true });
