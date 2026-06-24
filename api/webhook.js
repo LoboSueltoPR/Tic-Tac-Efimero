@@ -224,34 +224,44 @@ async function waSend(to, body) {
 }
 
 const OWNER = '5492915710185';
+// Marcador invisible que se agrega al final de las respuestas del bot
+// para detectarlas y no procesarlas de nuevo (anti-loop sin estado)
+const BOT_MARKER = '​';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('Tic Tac Efimero Bot — OK');
 
   try {
-    const body = req.body ?? {};
-    const { data, event_type } = body;
+    const { data, event_type } = req.body ?? {};
 
     console.log('EVENT:', event_type, '| FROM:', data?.from, '| TO:', data?.to, '| TYPE:', data?.type, '| BODY:', data?.body?.slice(0, 60));
 
-    // Solo procesar mensajes RECIBIDOS (no los que manda el bot)
-    if (event_type !== 'message_received') return res.status(200).json({ ok: true });
+    // Aceptar message_create (auto-mensajes) y message_received
+    if (event_type !== 'message_create' && event_type !== 'message_received')
+      return res.status(200).json({ ok: true });
     if (data?.type !== 'chat') return res.status(200).json({ ok: true });
+
+    // Si el cuerpo tiene el marcador del bot → es una respuesta propia, ignorar
+    const rawBody = data?.body ?? '';
+    if (rawBody.includes(BOT_MARKER)) {
+      console.log('SKIP: respuesta del bot (marcador encontrado)');
+      return res.status(200).json({ ok: true });
+    }
 
     const fromNumber = (data?.from ?? '').replace('@c.us', '').replace(/\D/g, '');
     console.log('FROM_NUMBER:', fromNumber, '| MATCH:', fromNumber === OWNER);
 
-    // Solo procesar mensajes del dueño
     if (fromNumber !== OWNER) return res.status(200).json({ ok: true });
 
-    const text = data?.body?.trim();
+    const text = rawBody.trim();
     if (!text) return res.status(200).json({ ok: true });
 
     console.log('PROCESANDO:', text);
     const reply = await processMessage(text);
     console.log('RESPUESTA:', reply?.slice(0, 80));
 
-    const sentId = await waSend(`${OWNER}@c.us`, reply);
+    // Enviar con marcador invisible al final para evitar loop
+    const sentId = await waSend(`${OWNER}@c.us`, reply + BOT_MARKER);
     console.log('ENVIADO, ID:', sentId);
 
     return res.status(200).json({ ok: true });
