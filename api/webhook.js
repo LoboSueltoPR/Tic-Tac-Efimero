@@ -224,7 +224,6 @@ async function waSend(to, body) {
 }
 
 const OWNER = '5492915710185';
-const sentByBot = new Set();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('Tic Tac Efimero Bot — OK');
@@ -233,26 +232,16 @@ export default async function handler(req, res) {
     const body = req.body ?? {};
     const { data, event_type } = body;
 
-    // Log para diagnóstico
-    console.log('EVENT:', event_type, '| FROM:', data?.from, '| TYPE:', data?.type, '| BODY:', data?.body?.slice(0, 60));
+    console.log('EVENT:', event_type, '| FROM:', data?.from, '| TO:', data?.to, '| TYPE:', data?.type, '| BODY:', data?.body?.slice(0, 60));
 
-    const isReceived = event_type === 'message_received';
-    const isCreated  = event_type === 'message_create';
-    if (!isReceived && !isCreated) return res.status(200).json({ ok: true });
-    if (data?.type !== 'chat')     return res.status(200).json({ ok: true });
+    // Solo procesar mensajes RECIBIDOS (no los que manda el bot)
+    if (event_type !== 'message_received') return res.status(200).json({ ok: true });
+    if (data?.type !== 'chat') return res.status(200).json({ ok: true });
 
-    // Anti-loop
-    if (sentByBot.has(data?.id)) {
-      sentByBot.delete(data.id);
-      console.log('SKIP: mensaje del bot');
-      return res.status(200).json({ ok: true });
-    }
+    const fromNumber = (data?.from ?? '').replace('@c.us', '').replace(/\D/g, '');
+    console.log('FROM_NUMBER:', fromNumber, '| MATCH:', fromNumber === OWNER);
 
-    const rawFrom    = data?.from ?? '';
-    const fromNumber = rawFrom.replace('@c.us', '').replace(/\D/g, '');
-
-    console.log('FROM_NUMBER:', fromNumber, '| OWNER:', OWNER, '| MATCH:', fromNumber === OWNER);
-
+    // Solo procesar mensajes del dueño
     if (fromNumber !== OWNER) return res.status(200).json({ ok: true });
 
     const text = data?.body?.trim();
@@ -263,7 +252,6 @@ export default async function handler(req, res) {
     console.log('RESPUESTA:', reply?.slice(0, 80));
 
     const sentId = await waSend(`${OWNER}@c.us`, reply);
-    if (sentId) sentByBot.add(sentId);
     console.log('ENVIADO, ID:', sentId);
 
     return res.status(200).json({ ok: true });
