@@ -208,65 +208,48 @@ Reglas:
   return 'Se alcanzó el límite de pasos. Reformulá el pedido.';
 }
 
-// ── UltraMsg ──────────────────────────────────────────────────────────────────
-async function waSend(to, body) {
-  const number = to.replace('@c.us', '').replace(/\D/g, '');
-  const params = new URLSearchParams({
-    token: process.env.ULTRAMSG_TOKEN,
-    to:    number,
-    body,
-  });
-  const res = await fetch(`https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE_ID}/messages/chat`, {
+// ── Telegram ──────────────────────────────────────────────────────────────────
+async function tgSend(chatId, text) {
+  const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    params.toString(),
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ chat_id: chatId, text }),
   });
   const json = await res.json().catch(() => ({}));
-  return json?.id ?? null;
+  return json?.result?.message_id ?? null;
 }
-
-const OWNER = '5492915710185';
-// Marcador invisible que se agrega al final de las respuestas del bot
-// para detectarlas y no procesarlas de nuevo (anti-loop sin estado)
-const BOT_MARKER = '​';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('Tic Tac Efimero Bot — OK');
 
   try {
-    const { data, event_type } = req.body ?? {};
+    const { message } = req.body ?? {};
 
-    console.log('EVENT:', event_type, '| FROM:', data?.from, '| TO:', data?.to, '| TYPE:', data?.type, '| BODY:', data?.body?.slice(0, 60));
+    if (!message) return res.status(200).json({ ok: true });
 
-    // Aceptar message_create (auto-mensajes) y message_received
-    if (event_type !== 'message_create' && event_type !== 'message_received')
-      return res.status(200).json({ ok: true });
-    if (data?.type !== 'chat') return res.status(200).json({ ok: true });
+    const chatId = message.chat?.id;
+    const text   = message.text?.trim();
 
-    // Si el cuerpo tiene el marcador del bot → es una respuesta propia, ignorar
-    const rawBody = data?.body ?? '';
-    if (rawBody.includes(BOT_MARKER)) {
-      console.log('SKIP: respuesta del bot (marcador encontrado)');
+    console.log('CHAT_ID:', chatId, '| TEXT:', text?.slice(0, 60));
+
+    // Si no está configurado el owner, responder con el chat_id para setup
+    if (!process.env.TELEGRAM_CHAT_ID) {
+      await tgSend(chatId, `Tu chat_id es: ${chatId}\nAgregalo en Vercel como TELEGRAM_CHAT_ID`);
       return res.status(200).json({ ok: true });
     }
 
-    const fromNumber = (data?.from ?? '').replace('@c.us', '').replace(/\D/g, '');
-    const toNumber   = (data?.to   ?? '').replace('@c.us', '').replace(/\D/g, '');
-    console.log('FROM:', fromNumber, '| TO:', toNumber, '| SELF:', fromNumber === OWNER && toNumber === OWNER);
+    // Solo responder al owner
+    if (String(chatId) !== String(process.env.TELEGRAM_CHAT_ID))
+      return res.status(200).json({ ok: true });
 
-    // Solo procesar auto-mensajes (de mí mismo a mí mismo)
-    if (fromNumber !== OWNER || toNumber !== OWNER) return res.status(200).json({ ok: true });
-
-    const text = rawBody.trim();
     if (!text) return res.status(200).json({ ok: true });
 
     console.log('PROCESANDO:', text);
     const reply = await processMessage(text);
     console.log('RESPUESTA:', reply?.slice(0, 80));
 
-    // Enviar con marcador invisible al final para evitar loop
-    const sentId = await waSend(`${OWNER}@c.us`, reply + BOT_MARKER);
-    console.log('ENVIADO, ID:', sentId);
+    await tgSend(chatId, reply);
+    console.log('ENVIADO');
 
     return res.status(200).json({ ok: true });
 
