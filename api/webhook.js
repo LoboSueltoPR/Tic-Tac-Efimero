@@ -208,47 +208,49 @@ Reglas:
   return 'Se alcanzó el límite de pasos. Reformulá el pedido.';
 }
 
-// ── Telegram ──────────────────────────────────────────────────────────────────
-async function tgSend(chatId, text) {
-  const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+// ── Green API ─────────────────────────────────────────────────────────────────
+const OWNER_CHAT_ID = `${process.env.OWNER_PHONE}@c.us`;
+
+async function gaSend(text) {
+  const base = `https://api.green-api.com/waInstance${process.env.GREEN_ID_INSTANCE}`;
+  const token = process.env.GREEN_API_TOKEN;
+  const res = await fetch(`${base}/sendMessage/${token}`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ chat_id: chatId, text }),
+    body:    JSON.stringify({ chatId: OWNER_CHAT_ID, message: text }),
   });
   const json = await res.json().catch(() => ({}));
-  return json?.result?.message_id ?? null;
+  console.log('GREEN_SEND:', JSON.stringify(json));
+  return json?.idMessage ?? null;
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('Tic Tac Efimero Bot — OK');
 
   try {
-    const { message } = req.body ?? {};
+    const body = req.body ?? {};
+    const { typeWebhook, senderData, messageData } = body;
 
-    if (!message) return res.status(200).json({ ok: true });
+    console.log('TYPE:', typeWebhook, '| FROM:', senderData?.chatId, '| MSG_TYPE:', messageData?.typeMessage);
 
-    const chatId = message.chat?.id;
-    const text   = message.text?.trim();
+    // Solo procesar mensajes entrantes de texto (ignora los que manda el bot via API)
+    if (typeWebhook !== 'incomingMessageReceived') return res.status(200).json({ ok: true });
+    if (messageData?.typeMessage !== 'textMessage') return res.status(200).json({ ok: true });
 
-    console.log('CHAT_ID:', chatId, '| TEXT:', text?.slice(0, 60));
+    const fromChatId = senderData?.chatId ?? '';
+    console.log('FROM:', fromChatId, '| OWNER:', OWNER_CHAT_ID, '| MATCH:', fromChatId === OWNER_CHAT_ID);
 
-    // Si no está configurado el owner, responder con el chat_id para setup
-    if (!process.env.TELEGRAM_CHAT_ID) {
-      await tgSend(chatId, `Tu chat_id es: ${chatId}\nAgregalo en Vercel como TELEGRAM_CHAT_ID`);
-      return res.status(200).json({ ok: true });
-    }
+    // Solo procesar mensajes del owner
+    if (fromChatId !== OWNER_CHAT_ID) return res.status(200).json({ ok: true });
 
-    // Solo responder al owner
-    if (String(chatId) !== String(process.env.TELEGRAM_CHAT_ID))
-      return res.status(200).json({ ok: true });
-
+    const text = messageData?.textMessageData?.textMessage?.trim();
     if (!text) return res.status(200).json({ ok: true });
 
     console.log('PROCESANDO:', text);
     const reply = await processMessage(text);
     console.log('RESPUESTA:', reply?.slice(0, 80));
 
-    await tgSend(chatId, reply);
+    await gaSend(reply);
     console.log('ENVIADO');
 
     return res.status(200).json({ ok: true });
