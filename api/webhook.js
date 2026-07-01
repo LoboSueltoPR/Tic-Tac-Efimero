@@ -233,14 +233,17 @@ export default async function handler(req, res) {
 
     console.log('TYPE:', typeWebhook, '| FROM:', senderData?.chatId, '| MSG_TYPE:', messageData?.typeMessage);
 
-    // Solo procesar mensajes entrantes de texto (ignora los que manda el bot via API)
-    if (typeWebhook !== 'incomingMessageReceived') return res.status(200).json({ ok: true });
+    // incomingMessageReceived = mensajes que llegan al celular
+    // outgoingMessageReceived = mensajes enviados desde el celular (auto-mensajes)
+    // outgoingAPIMessageReceived = respuestas del bot → IGNORAR
+    const validType = typeWebhook === 'incomingMessageReceived' || typeWebhook === 'outgoingMessageReceived';
+    if (!validType) return res.status(200).json({ ok: true });
     if (messageData?.typeMessage !== 'textMessage') return res.status(200).json({ ok: true });
 
     const fromChatId = senderData?.chatId ?? '';
-    console.log('FROM:', fromChatId, '| OWNER:', OWNER_CHAT_ID, '| MATCH:', fromChatId === OWNER_CHAT_ID);
+    console.log('TYPE:', typeWebhook, '| FROM:', fromChatId, '| OWNER:', OWNER_CHAT_ID);
 
-    // Solo procesar mensajes del owner
+    // Solo procesar auto-mensajes (chat del owner = mensaje a uno mismo)
     if (fromChatId !== OWNER_CHAT_ID) return res.status(200).json({ ok: true });
 
     const text = messageData?.textMessageData?.textMessage?.trim();
